@@ -2,7 +2,7 @@
 
 ### Description
 
-Ce projet a été créé dans le cadre de l'UV IF2B. Il implémente une version en ligne du jeu "Teeko"
+Ce projet a été créé dans le cadre de l'UV IF2B au 1er semestre de prépa intégrée à l'UTBM. Il implémente une version en ligne du jeu "Teeko"
 
 ### Language
 
