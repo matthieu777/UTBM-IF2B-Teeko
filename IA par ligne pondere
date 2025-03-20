@@ -1,0 +1,621 @@
+from PIL import Image
+from math import sqrt, exp
+from random import * 
+
+def dist(vec1, vec2):
+    return sqrt((vec2[0] - vec1[0])**2 + (vec2[1] - vec1[1])**2)
+
+def dot(vectors):
+    dx = 1
+    dy = 1
+    for i in range(len(vectors)) :
+        dx *= vectors[i][0]
+        dy *= vectors[i][1]
+    return dx + dy
+
+def subs(vec1, vec2):
+    x = vec2[0] - vec1[0]
+    y = vec2[1] - vec1[1]
+    return (x,y)
+
+def add(vec1, vec2):
+    x = vec2[0] + vec1[0]
+    y = vec2[1] + vec1[1]
+    return (x,y)
+
+def fact(r, vec):
+    return (r*vec[0], r*vec[1])
+
+def mean(vectors):
+    x, y = 0, 0
+    for i in range(len(vectors)):
+        x += vectors[i][0]
+        y += vectors[i][1]
+    return fact(1/len(vectors), (x,y))
+
+def negative(vec):
+    if vec[0] <= 0 and vec[1] <= 0 :
+        return -1
+    else :
+        return 1
+
+def normalize(vec):
+    return fact(1/dist(vec, (0,0)), vec)
+
+def f(x):
+    return round(1 - ( 2 / ( exp(x*10) + 1)) )
+
+def unit(vec):
+    return (f(vec[0]), f(vec[1]))
+
+
+def get_max(tab):
+    max = 0
+    idx_max = []
+    for i in range(len(tab)):
+        for j in range(len(tab[0])):
+            if  tab[i][j] > max:
+                max = tab[i][j]
+                idx_max.append((i,j))
+    return max, idx_max
+
+def coordinates(gb, ally):
+    enemies = []
+    allies = []
+
+    for i in range(len(gb)):
+        for j in range(len(gb[0])):
+            if gb[i][j] == ally :
+                allies.append((j,i)) ####### changer coos peut etre ##########
+            elif gb[i][j] == 1 :
+                enemies.append((j,i))  ############## changer coos peut etre #############
+
+    return enemies, allies
+
+n = 5
+a = 70
+
+
+
+def IAJosh(plateau, couleur_us= 1):
+    idx = [[0 for i in range(n)] for j in range(n)]
+    vec_pion_adv, vec_pion_ally = coordinates(plateau, couleur_us)
+
+    for i in range(n):
+        for j in range(n):
+            vec = (j,i) # vector of the square on the gameboard ################ changer coos peut etre ####################
+
+            # Handles the enemy's weight
+            if vec_pion_adv != []:
+                E_difference_vector = subs(vec_pion_adv[-1], vec_pion_adv[0]) # difference between the two pawns as a vect
+                mean_vector = mean(vec_pion_adv)
+                E_difference_vector = unit(E_difference_vector)
+                p = pow(sqrt(2), dist(E_difference_vector, (0,0))**2)
+                E_difference_vector = fact(p, E_difference_vector)
+                enemy_weight = dist(add(mean_vector, E_difference_vector), vec) * dist(subs(E_difference_vector, mean_vector), vec)
+            else :
+                enemy_weight = 1
+
+            # Handles the ally's weight
+            # Maybe needs a coefficient depending on the distance of two tokens (a dot product between the vectors positions of the tokens)
+            if vec_pion_ally != [] :
+                A_difference_vector = subs(vec_pion_ally[-1], vec_pion_ally[0]) # difference between the two pawns as a vect
+                mean_vector = mean(vec_pion_ally)
+                A_difference_vector = unit(A_difference_vector)
+                p = pow(sqrt(2), dist(A_difference_vector, (0,0))**2)
+                A_difference_vector = fact(p, A_difference_vector)
+                ally_weight = dist(add(mean_vector, A_difference_vector), vec) * dist(subs(A_difference_vector, mean_vector), vec)
+            else :
+                ally_weight = 1
+
+            idx[i][j] = exp(-(ally_weight / (len(vec_pion_ally) + 1)) * (enemy_weight / (len(vec_pion_adv) + 1)))
+    for i in range(n) :
+        for j in range(n):
+            if plateau[i][j] != 0:
+                idx[i][j] = 0
+    return idx
+
+"""
+for i in range(n):
+    for j in range(n):
+        print(tab[i][j], end=' ')
+    print('\n')
+
+for y in range(n*a):
+    for x in range(n*a):
+        if tab[x//a][y//a] == 0 :
+            img.putpixel((x,y),(int(tab[y//a][x//a]*500),0,0))
+        elif tab[x//a][y//a] == 1 : # blue for enemy, green ally
+            img.putpixel((x,y),(0,0,255))
+        else :
+            img.putpixel((x,y),(0,255,0))
+
+img.save('color.png')"""
+
+
+def moyenne(tab, indice):
+    x = 0
+    for i in range(len(tab)):
+        x += tab[i][indice]
+    return x/len(tab)
+
+def IAPierre(plateau, couleur_us= 1):
+    #renvoie le tableau des probabilite du meilleur choix
+    #le mieux c le plus grand
+    #t'as pas besoin de mettre le nez dans cette merde XD
+    n = 5
+    tab1 = [[0 for i in range(n)] for j in range(n)]
+    Liste_droites = []
+    
+    def force(x_c, y_c, x_p, y_p, F,couleur):   #c pour le centre de la droite et p pour la caseque l'ont veut return
+        #distance = sqrt((x_c -x_p)**2 + (y_c -y_p)**2)
+        distance = max(abs(int(x_c-x_p)), abs(int(y_c-y_p)))
+        if F == 4 and plateau[y_p][x_p] == couleur:
+            print(y_p, x_p, plateau[y_p][x_p], couleur)
+            fini.append("si ca plante pas je suis une pute")
+        if couleur == couleur_us:
+            return(F**4*exp((-F/20)*distance**2))
+        else:
+            return(F**3.9*exp((-F/20)*distance**2))
+      
+
+    # L = (a, b, x, y, F, c)
+    # ---   
+    for b in range(n):
+        F = 0
+        x = 0
+        y = 0
+        for i in range(n):
+            if plateau[b][i] == 1:
+                F +=1
+                y += i
+                x += b
+        if F != 0:
+            Liste_droites.append([1, b, b, n//2, F, 1])
+             #Liste_droites.append([1, b, x/F, y/F, F, 1])
+            
+    # \
+    L1 = [[[4, 0]], [[3, 0],[4,1]], [[2, 0],[3, 1],[4, 2]], [[1, 0],[2, 1],[3, 2],[4, 3]], [[0, 0],[1, 1],[2, 2],[3, 3],[4, 4]], [[0, 1],[1,2],[2,3],[3,4]], [[0,2],[1,3],[2,4]], [[0,3],[1,4]], [[0,4]]]
+    for b in range((2*n)-1):
+        F = 0
+        x = 0
+        y = 0
+        i = 0
+        for i in range(len(L1[b])):
+            if plateau[L1[b][i][0]][L1[b][i][1]] == 1:
+                F +=1
+                y += L1[b][i][0]
+                x += L1[b][i][1]
+        if F != 0:
+            Liste_droites.append([2, b, moyenne(L1[b], 1), moyenne(L1[b], 0), F, 1])
+            #Liste_droites.append([2, b, x/F, y/F, F, 1])
+                
+    # /
+    L2 = [[[0, 0]], [[1, 0],[0,1]], [[2, 0],[1, 1],[0, 2]], [[3, 0],[2, 1],[1, 2],[0, 3]], [[4, 0],[3, 1],[2, 2],[1, 3],[0, 4]], [[4, 1],[3,2],[2,3],[1,4]], [[4,2],[3,3],[2,4]], [[4,3],[3,4]], [[4,4]]]
+    for b in range((2*n)-1):
+        F = 0
+        x = 0
+        y = 0
+        i = 0
+        for i in range(len(L2[b])):
+            if plateau[L2[b][i][0]][L2[b][i][1]] == 1:
+                F +=1
+                y += L2[b][i][0]
+                x += L2[b][i][1]
+        if F != 0:
+            Liste_droites.append([3, b, moyenne(L2[b], 1), moyenne(L2[b], 0), F, 1])
+            #Liste_droites.append([3, b, x/F, y/F, F, 1])
+    # |  
+    for b in range(n):
+        F = 0
+        x = 0
+        y = 0
+        for i in range(n):
+            if plateau[i][b] == 1:
+                F +=1
+                y += b
+                x += i
+        if F != 0:
+            Liste_droites.append([4, b, n//2, b, F, 1])
+            #Liste_droites.append([4, b, x/F, y/F, F, 1])
+      
+    #mtn c pour la couleur 2
+    for b in range(n):
+        F = 0
+        x = 0
+        y = 0
+        for i in range(n):
+            if plateau[b][i] == 2:
+                F +=1
+                y += i
+                x += b
+        if F != 0:
+            Liste_droites.append([1, b, b, n//2, F, 2])
+            
+    # \
+    L1 = [[[4, 0]], [[3, 0],[4,1]], [[2, 0],[3, 1],[4, 2]], [[1, 0],[2, 1],[3, 2],[4, 3]], [[0, 0],[1, 1],[2, 2],[3, 3],[4, 4]], [[0, 1],[1,2],[2,3],[3,4]], [[0,2],[1,3],[2,4]], [[0,3],[1,4]], [[0,4]]]
+    for b in range((2*n)-1):
+        F = 0
+        x = 0
+        y = 0
+        i = 0
+        for i in range(len(L1[b])):
+            if plateau[L1[b][i][0]][L1[b][i][1]] == 2:
+                F +=1
+                y += L1[b][i][0]
+                x += L1[b][i][1]
+        if F != 0:
+            Liste_droites.append([2, b, L1[b][len(L1[b])//2][1], L1[b][len(L1[b])//2][0], F, 2])
+                
+    # /
+    L2 = [[[0, 0]], [[1, 0],[0,1]], [[2, 0],[1, 1],[0, 2]], [[3, 0],[2, 1],[1, 2],[0, 3]], [[4, 0],[3, 1],[2, 2],[1, 3],[0, 4]], [[4, 1],[3,2],[2,3],[1,4]], [[4,2],[3,3],[2,4]], [[4,3],[3,4]], [[4,4]]]
+    for b in range((2*n)-1):
+        F = 0
+        x = 0
+        y = 0
+        i = 0
+        for i in range(len(L2[b])):
+            if plateau[L2[b][i][0]][L2[b][i][1]] == 2:
+                F +=1
+                y += L2[b][i][0]
+                x += L2[b][i][1]
+        if F != 0:
+            Liste_droites.append([3, b, L1[b][len(L1[b])//2][1], L1[b][len(L1[b])//2][1], F, 1])
+    # |  
+    for b in range(n):
+        F = 0
+        x = 0
+        y = 0
+        for i in range(n):
+            if plateau[i][b] == 2:
+                F +=1
+                y += b
+                x += i
+        if F != 0:
+            Liste_droites.append([4, b, n//2, b, F, 1])
+    
+        
+    print("\n",Liste_droites, n)    
+    for i in range(len(Liste_droites)-1, 0, -1): # on supprime les droites aillant un centre dans un coin, elle ne sont pas interressantes 
+        if Liste_droites[i][2] < (n-1)//2-0.5 or Liste_droites[i][2] > (n)//2 +0.5:
+            if Liste_droites[i][3] < (n-1)//2-0.5 or Liste_droites[i][3] > (n)//2 + 0.5:
+                Liste_droites.pop(i)
+    print(Liste_droites)
+    
+    for j in range(len(Liste_droites)):
+        if Liste_droites[j][0] == 1: # --
+            for i in range(n):
+                tab1[Liste_droites[j][1]][i] += force(Liste_droites[j][2], Liste_droites[j][3], Liste_droites[j][1], i, Liste_droites[j][4], Liste_droites[j][5])
+        if Liste_droites[j][0] == 2: # \
+            for i in range(len(L1[Liste_droites[j][1]])):
+                tab1[L1[Liste_droites[j][1]] [i][0]]  [L1[Liste_droites[j][1]] [i][1]] += force(Liste_droites[j][3], Liste_droites[j][2],L1[Liste_droites[j][1]] [i][0], L1[Liste_droites[j][1]] [i][1], Liste_droites[j][4], Liste_droites[j][5])
+        if Liste_droites[j][0] == 3: # /
+            for i in range(len(L2[Liste_droites[j][1]])):
+                tab1[L2[Liste_droites[j][1]] [i][0]]  [L2[Liste_droites[j][1]] [i][1]] += force(Liste_droites[j][3], Liste_droites[j][2], L2[Liste_droites[j][1]] [i][0], L2[Liste_droites[j][1]] [i][1], Liste_droites[j][4], Liste_droites[j][5])
+        if Liste_droites[j][0] == 4: # |
+            for i in range(n):
+                tab1[i][Liste_droites[j][1]] += force(Liste_droites[j][2], Liste_droites[j][3], i, Liste_droites[j][1], Liste_droites[j][4], Liste_droites[j][5])
+    
+    for i in range(n) :
+        for j in range(n):
+            if plateau[i][j] != 0:
+                tab1[i][j] = 0
+                
+    return tab1
+    
+
+def IADeplacementJosh(plateau, couleur_us): 
+    n = 5
+    tab = []
+    tab2 = []
+    nbr = -1
+    refdespion = [] # il sevira a la fin pour retrouver le pion 
+    for x in range(n): #contrairement au apparence c pas du n^4 
+        for y in range(n):
+            if plateau[y][x] == couleur_us:
+                refdespion.append([y, x])
+                nbr+=1
+                tab.append([[0 for i in range(n)] for j in range(n)])
+                for i in range(n):
+                    for j in range(n):
+                        tab[nbr][i][j] = plateau[i][j]
+                tab[nbr][y][x] = 3 # cree tt les sous tableaux
+    
+    for k in range(nbr+1):
+        """
+        print('\n\n')
+        for i in range(n):
+            for j in range(n):
+                print(tab[k][i][j], end=' ')
+            print('\n')"""
+            
+        tab2.append(IAJosh(tab[k], couleur_us)) # la tu dois changer le deplacement ============================
+        
+        """print('bbb\n')
+        for i in range(n):
+            for j in range(n):
+                print(tab2[k][i][j], end=' ')
+            print('\n')"""
+        x = 0
+        y = 0
+        for i in range(n):
+            for j in range(n):
+                if tab[k][i][j] == 3:
+                    x = i
+                    y = j
+        for i in range(n): # la on met a 0 tt les cases trop loin du pion
+            for j in range(n):
+                if abs(i - x) > 1 or abs(j - y) > 1:
+                    tab2[k][i][j] = 0
+        """print('\n')
+        for i in range(n):
+            for j in range(n):
+                print(tab2[k][i][j], end=' ')
+            print('\n')"""
+        
+        #affichage des plateau
+        """
+        nom = 'color'+str(k) + '.png'
+        img = Image.new('RGB', (n*100,n*100))   
+        m = max([tab2[k][i//n][i%n] for i in range(n*n)]) 
+        for y in range(n*100):
+            for x in range(n*100):
+                img.putpixel((x,y),(int(255 * (tab2[k][y//100][x//100]/m))))
+                if tab[k][y//100][x//100] == 1:
+                    img.putpixel((x,y),(0,255,0))
+                if tab[k][y//100][x//100] == 2:
+                    img.putpixel((x,y),(0,0, 255))
+                if tab[k][y//100][x//100] == 3:
+                    img.putpixel((x,y),(0,150, 0))
+                if tab2[k][y//100][x//100] == m:
+                    img.putpixel((x,y),(255,255,255))
+                    
+        img.save(nom)"""
+        
+    tab1 = [[0 for i in range(n)] for j in range(n)]
+    tabpion = [[0 for i in range(n)] for j in range(n)]
+    for k in range(len(tab2)): # la on va fusionner tt les tableaux en gardant le max
+        for i in range(n):
+            for j in range(n):
+                if tab1[i][j] < tab2[k][i][j]:
+                    tab1[i][j] = tab2[k][i][j]
+                    tabpion[i][j] = k
+    """              
+    img = Image.new('RGB', (n*100,n*100))   
+    m = max([tab1[i//n][i%n] for i in range(n*n)]) 
+    for y in range(n*100):
+        for x in range(n*100):
+            img.putpixel((x,y),(int(255 * (tab2[k][y//100][x//100]/m))))
+            if plateau[y//100][x//100] == 1:
+                img.putpixel((x,y),(0,255,0))
+            if plateau[y//100][x//100] == 2:
+                img.putpixel((x,y),(0,0, 255))
+            if tab1[y//100][x//100] == m:
+                img.putpixel((x,y),(255,255,255))
+    img.save('color.png')"""
+                 
+    x = 2
+    y = 2
+    for i in range(n):
+        for j in range(n):
+            if tab1[i][j] > tab1[y][x]:
+                y = i
+                x = j
+                
+    print(x, y, refdespion, tabpion[y][x])
+    return x, y, refdespion[tabpion[y][x]][1], refdespion[tabpion[y][x]][0]
+
+def IADeplacementPierre(plateau, couleur_us): 
+    n = 5
+    tab = []
+    tab2 = []
+    nbr = -1
+    refdespion = [] # il sevira a la fin pour retrouver le pion 
+    for x in range(n): #contrairement au apparence c pas du n^4 
+        for y in range(n):
+            if plateau[y][x] == couleur_us:
+                refdespion.append([y, x])
+                nbr+=1
+                tab.append([[0 for i in range(n)] for j in range(n)])
+                for i in range(n):
+                    for j in range(n):
+                        tab[nbr][i][j] = plateau[i][j]
+                tab[nbr][y][x] = 3 # cree tt les sous tableaux
+    
+    for k in range(nbr+1):
+        """
+        print('\n\n')
+        for i in range(n):
+            for j in range(n):
+                print(tab[k][i][j], end=' ')
+            print('\n')"""
+            
+        tab2.append(IAPierre(tab[k], couleur_us)) # la tu dois changer le deplacement ============================
+        """
+        print('bbb\n')
+        for i in range(n):
+            for j in range(n):
+                print(tab2[k][i][j], end=' ')
+            print('\n')"""
+        x = 0
+        y = 0
+        for i in range(n):
+            for j in range(n):
+                if tab[k][i][j] == 3:
+                    x = i
+                    y = j
+        for i in range(n): # la on met a 0 tt les cases trop loin du pion
+            for j in range(n):
+                if abs(i - x) > 1 or abs(j - y) > 1:
+                    tab2[k][i][j] = 0
+        """
+        print('\n')
+        for i in range(n):
+            for j in range(n):
+                print(tab2[k][i][j], end=' ')
+            print('\n')"""
+        
+        #affichage des plateau
+
+        
+    tab1 = [[0 for i in range(n)] for j in range(n)] # tab des indices
+    tabpion = [[0 for i in range(n)] for j in range(n)] # tab parallele avec le pion qui doit aller la
+    for k in range(len(tab2)): # la on va fusionner tt les tableaux en gardant le max
+        for i in range(n):
+            for j in range(n):
+                if tab1[i][j] < tab2[k][i][j]:
+                    tab1[i][j] = tab2[k][i][j]
+                    tabpion[i][j] = k
+                 
+    x = 2
+    y = 2
+
+    for i in range(n):
+        for j in range(n):
+            if tab1[i][j] > tab1[y][x]:
+                y = i
+                x = j
+
+    """
+    print('info', y, x, plateau[y][x])
+    if plateau[y][x] != 0:
+        print('Artoug ! ', x, y, refdespion[tabpion[y][x]][1], refdespion[tabpion[y][x]][0])
+        x, y, refdespion[tabpion[y][x]][1], refdespion[tabpion[y][x]][0] = IADeplacementPierre(tab[tabpion[y][x]], couleur_us)
+    """
+    print(x, y, refdespion, tabpion[y][x])
+    return x, y, refdespion[tabpion[y][x]][1], refdespion[tabpion[y][x]][0]
+
+def affichage(k, tab):
+    nom = 'tour'+str(k) + '.png'
+    img = Image.new('RGB', (n*100,n*100))   
+    m = max([tab[i//n][i%n] for i in range(n*n)]) 
+    if m == 0:
+        m = 1
+    for y in range(n*100):
+        for x in range(n*100):
+            img.putpixel((x,y),(int(255 * (tab[y//100][x//100]/m))))
+            if plateau[y//100][x//100] == 1:
+                img.putpixel((x,y),(0,255,0))
+            if plateau[y//100][x//100] == 2:
+                img.putpixel((x,y),(0,0, 255))
+            if plateau[y//100][x//100] == 3:
+                img.putpixel((x,y),(0,255, 255))
+            if tab[y//100][x//100] == m:
+                img.putpixel((x,y),(255,255,255))          
+    img.save(nom)
+    
+n = 5
+plateau = [[0 for i in range(n)] for j in range(n)] 
+#phase 1
+for tour in range(n-1):
+    k=1
+    tab = IAPierre(plateau, k) #le seul truc a changer ===========================================
+    liste_des_endroits_a_jouer = []
+    m = max([tab[i//n][i%n] for i in range(n*n)]) 
+    for i in range(n):
+        for j in range(n):
+            if tab[j][i] == m:
+                liste_des_endroits_a_jouer.append([i, j])
+    affichage(tour*10+k, tab)
+    
+    r = randint(0,len(liste_des_endroits_a_jouer)-1)
+    print(r, liste_des_endroits_a_jouer)
+    plateau[liste_des_endroits_a_jouer[r][1]][liste_des_endroits_a_jouer[r][0]] = k
+    """ # c truc la c pour limiter encore plus l'aléatoire mais apres c chiant a regarder
+    a = 0
+    
+    for i in range(len(liste_des_endroits_a_jouer)):  # on prend le max
+        r = randint(0, len(liste_des_endroits_a_jouer)-1)
+        if sqrt(((liste_des_endroits_a_jouer[r][0]-2)**2) + ((liste_des_endroits_a_jouer[r][1]-2)**2)) < sqrt(((liste_des_endroits_a_jouer[a][0]-2)**2) + ((liste_des_endroits_a_jouer[a][1]-2)**2)):
+            a = r
+    print(a, liste_des_endroits_a_jouer)
+    plateau[liste_des_endroits_a_jouer[a][1]][liste_des_endroits_a_jouer[a][0]] = k"""
+    
+    k=2
+    tab = IAPierre(plateau, k) #le seul truc a changer ===========================================
+    liste_des_endroits_a_jouer = []
+    m = max([tab[i//n][i%n] for i in range(n*n)]) 
+    for i in range(n):
+        for j in range(n):
+            if tab[j][i] == m:
+                liste_des_endroits_a_jouer.append([i, j])
+    affichage(tour*10+k, tab)
+    
+    r = randint(0,len(liste_des_endroits_a_jouer)-1)
+    print(r, liste_des_endroits_a_jouer)
+    plateau[liste_des_endroits_a_jouer[r][1]][liste_des_endroits_a_jouer[r][0]] = k
+    """ # c truc la c pour limiter encore plus l'aléatoire mais apres c chiant a regarder
+    a = 0
+    for i in range(len(liste_des_endroits_a_jouer)):  # tkt il compare juste les distance
+        r = randint(0, len(liste_des_endroits_a_jouer)-1)
+        if sqrt(((liste_des_endroits_a_jouer[r][0]-2)**2) + ((liste_des_endroits_a_jouer[r][1]-2)**2)) < sqrt(((liste_des_endroits_a_jouer[a][0]-2)**2) + ((liste_des_endroits_a_jouer[a][1]-2)**2)):
+            a = r
+    print(a, liste_des_endroits_a_jouer)
+    plateau[liste_des_endroits_a_jouer[a][1]][liste_des_endroits_a_jouer[a][0]] = k"""
+        
+affichage(tour*10+k, tab)
+#phase 2
+
+for tour in range(20):
+    k=1
+    affichage((tour+1)*100+k, [[0 for i in range(n)] for j in range(n)])
+
+    x1, y1, x2, y2 = IADeplacementPierre(plateau, k) # la faut changer =============================
+    plateau[y1][x1] = k
+    plateau[y2][x2] = 0
+    
+    k=2
+    affichage((tour+1)*100+k, [[0 for i in range(n)] for j in range(n)])
+
+    x1, y1, x2, y2 = IADeplacementPierre(plateau, k) # la faut changer aussi ====================================
+    plateau[y1][x1] = k
+    plateau[y2][x2] = 0
+        
+    print("o")
+        
+    
+"""
+for i in range(4):
+    plateau[randint(0, n-1)][randint(0, n-1)] = 1
+    plateau[randint(0, n-1)][randint(0, n-1)] = 2
+    
+print('\n\n')
+for i in range(n):
+    for j in range(n):
+        print(plateau[i][j], end=' ')
+    print('\n')
+IADeplacement(plateau)
+    
+
+
+
+
+for k in range(1):
+    n = 5
+    plateau = [[0 for i in range(n)] for j in range(n)] 
+    plateau[0][0] = 1
+    
+    for i in range(3):
+        plateau[randint(0, n-1)][randint(0, n-1)] = 1
+        plateau[randint(0, n-1)][randint(0, n-1)] = 2
+        
+    nom = 'color'+str(k) + '.png'
+    img = Image.new('RGB', (n*100,n*100))
+    tab1 = IAPlacement(plateau)   
+    m = max([tab1[i//n][i%n] for i in range(n*n)]) 
+    print('\n\n')
+    for i in range(n):
+        for j in range(n):
+            print(tab1[i][j], end=' ')
+        print('\n')
+    for y in range(n*100):
+        for x in range(n*100):
+            img.putpixel((x,y),(int(255 * (tab1[y//100][x//100]/m))))
+            if plateau[y//100][x//100] == 1:
+                img.putpixel((x,y),(0,255,0))
+            if plateau[y//100][x//100] == 2:
+                img.putpixel((x,y),(0,0, 255))
+            if tab1[y//100][x//100] == m:
+                img.putpixel((x,y),(255,255,255))
+                
+    img.save(nom)"""
